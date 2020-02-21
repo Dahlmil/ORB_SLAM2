@@ -28,16 +28,20 @@
 #define G2O_SBA_TYPES
 
 #include "../core/base_vertex.h"
+#include "../core/g2o_core_api.h"
 
 #include <Eigen/Geometry>
 #include <iostream>
 
 namespace g2o {
 
+// BaseVertex  顶点SE3
+// 6, SE3Quat  最小表示为6个参数，内部为四元数
+// _estimate   w2c(Tcw)，from world to camera
 /**
  * \brief Point vertex, XYZ
  */
- class VertexSBAPointXYZ : public BaseVertex<3, Vector3d>
+	class G2O_CORE_API VertexSBAPointXYZ : public BaseVertex<3, Vector3d>
 {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW    
