@@ -18,111 +18,137 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <chrono>
 
-#include<iostream>
-#include<algorithm>
-#include<fstream>
-#include<chrono>
+#include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
+#include "Converter.h"
 
-#include<opencv2/core/core.hpp>
+#include <System.h>
+#include <sys/time.h>
 
-#include<System.h>
-
+using namespace cv;
 using namespace std;
+using namespace ORB_SLAM2;
 
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
 
+long GetCurrentTime(void);
+
+void QuaternionToeularangle(float &q0, float &q1, float &q2, float &q3);
+
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    if (argc != 4)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
+        cerr << endl
+             << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
 
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
-    string strFile = string(argv[3])+"/rgb.txt";
+    string strFile = string(argv[3]) + "/rgb.txt";
     LoadImages(strFile, vstrImageFilenames, vTimestamps);
 
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(nImages);
 
-    cout << endl << "-------" << endl;
+    cout << endl
+         << "-------" << endl;
     cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl << endl;
+    cout << "Images in the sequence: " << nImages << endl
+         << endl;
 
+    VideoCapture inputVideo(0);
     // Main loop
     cv::Mat im;
-    for(int ni=0; ni<nImages; ni++)
+    inputVideo >> im;
+    while (1)
     {
         // Read image from file
-        im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
-        double tframe = vTimestamps[ni];
+        inputVideo >> im;
 
-        if(im.empty())
+        double tframe = GetCurrentTime();
+
+        if (im.empty())
         {
-            cerr << endl << "Failed to load image at: "
-                 << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
             return 1;
         }
 
-#ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
-#endif
-
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im,tframe);
 
-#ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
-#endif
-
-        double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-
-        vTimesTrack[ni]=ttrack;
-
-        // Wait to load the next frame
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimestamps[ni+1]-tframe;
-        else if(ni>0)
-            T = tframe-vTimestamps[ni-1];
-
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+        Mat Tcw = SLAM.TrackMonocular(im, tframe);
+        // cout << Tcw.cols << " " << Tcw.rows << endl;
+        if ((Tcw.cols == 4) && (Tcw.rows == 4))
+        {
+            Mat Rwc = Tcw.rowRange(0, 3).colRange(0, 3).t();
+            Mat Twc = -Rwc * Tcw.rowRange(0, 3).col(3);
+            vector<float> q = Converter::toQuaternion(Rwc);
+            cout << "X " << Twc.at<float>(0, 0) * 100 << endl;
+            cout << "Y " << Twc.at<float>(1, 0) * 100 << endl;
+            cout << "Z " << Twc.at<float>(2, 0) * 100 << endl;
+            cout << "------------------" << endl;
+        }
     }
 
     // Stop all threads
     SLAM.Shutdown();
 
     // Tracking time statistics
-    sort(vTimesTrack.begin(),vTimesTrack.end());
+    sort(vTimesTrack.begin(), vTimesTrack.end());
     float totaltime = 0;
-    for(int ni=0; ni<nImages; ni++)
+    for (int ni = 0; ni < nImages; ni++)
     {
-        totaltime+=vTimesTrack[ni];
+        totaltime += vTimesTrack[ni];
     }
-    cout << "-------" << endl << endl;
-    cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
-    cout << "mean tracking time: " << totaltime/nImages << endl;
+    cout << "-------" << endl
+         << endl;
+    cout << "median tracking time: " << vTimesTrack[nImages / 2] << endl;
+    cout << "mean tracking time: " << totaltime / nImages << endl;
 
     // Save camera trajectory
+    SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     return 0;
+}
+
+void QuaternionToeularangle(float &q0, float &q1, float &q2, float &q3)
+{
+    // cout << "------------------------" << endl;
+    // cout << q0 << " " << q1 << " " << q2 << " " << q3 << endl;
+    double roll_x, pitch_y, yaw_z;
+    // ,yaw_z_angle;
+    yaw_z=std::atan2(2*(q3*q2+q0*q1),1-2*(q1*q1+q2*q2)) * 57.29;
+    pitch_y=std::asin(2*(q3*q1-q0*q2)) * 57.29;
+    roll_x=std::atan2(2*(q3*q0+q1*q2),1-2*(q1*q1+q0*q0)) * 57.29;
+    // roll_x = (std::asin(q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3)*57.29);
+    // cout << "[" << roll_x << "]" << endl;
+    // cout << "------------------------" << endl;
+    cout <<"[" <<roll_x <<"; " << pitch_y <<"; "<<yaw_z << "]" <<endl;
+
+    // cout<<"roll_x="<<roll_x<<endl;
+    // cout<<"pitch_y="<<pitch_y<<endl;
+    // cout<<"yaw_z="<<yaw_z<<endl;
+}
+
+long GetCurrentTime(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
@@ -132,15 +158,15 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vecto
 
     // skip first three lines
     string s0;
-    getline(f,s0);
-    getline(f,s0);
-    getline(f,s0);
+    getline(f, s0);
+    getline(f, s0);
+    getline(f, s0);
 
-    while(!f.eof())
+    while (!f.eof())
     {
         string s;
-        getline(f,s);
-        if(!s.empty())
+        getline(f, s);
+        if (!s.empty())
         {
             stringstream ss;
             ss << s;
