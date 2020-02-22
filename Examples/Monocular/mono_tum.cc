@@ -50,14 +50,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Retrieve paths to images
-    vector<string> vstrImageFilenames;
-    vector<double> vTimestamps;
-    string strFile = string(argv[3]) + "/rgb.txt";
-    LoadImages(strFile, vstrImageFilenames, vTimestamps);
-
-    int nImages = vstrImageFilenames.size();
-
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, true);
 
@@ -67,9 +59,7 @@ int main(int argc, char **argv)
 
     cout << endl
          << "-------" << endl;
-    cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl
-         << endl;
+    cout << "opencv run" << endl;
 
     VideoCapture inputVideo(0);
     // Main loop
@@ -108,15 +98,6 @@ int main(int argc, char **argv)
 
     // Tracking time statistics
     sort(vTimesTrack.begin(), vTimesTrack.end());
-    float totaltime = 0;
-    for (int ni = 0; ni < nImages; ni++)
-    {
-        totaltime += vTimesTrack[ni];
-    }
-    cout << "-------" << endl
-         << endl;
-    cout << "median tracking time: " << vTimesTrack[nImages / 2] << endl;
-    cout << "mean tracking time: " << totaltime / nImages << endl;
 
     // Save camera trajectory
     SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
