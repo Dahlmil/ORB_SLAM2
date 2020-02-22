@@ -54,14 +54,12 @@ int main(int argc, char **argv)
     ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, true);
 
     // Vector for tracking time statistics
-    vector<float> vTimesTrack;
-    vTimesTrack.resize(nImages);
 
     cout << endl
          << "-------" << endl;
     cout << "opencv run" << endl;
 
-    VideoCapture inputVideo(0);
+    VideoCapture inputVideo(1);
     // Main loop
     cv::Mat im;
     inputVideo >> im;
@@ -95,9 +93,6 @@ int main(int argc, char **argv)
 
     // Stop all threads
     SLAM.Shutdown();
-
-    // Tracking time statistics
-    sort(vTimesTrack.begin(), vTimesTrack.end());
 
     // Save camera trajectory
     SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
