@@ -34,8 +34,6 @@ using namespace cv;
 using namespace std;
 using namespace ORB_SLAM2;
 
-// #define VIDEO_MODE
-
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
 
@@ -61,26 +59,14 @@ int main(int argc, char **argv)
          << "-------" << endl;
     cout << "opencv run" << endl;
 
-    
+    VideoCapture inputVideo(1);
     // Main loop
     cv::Mat im;
-    #ifdef VIDEO_MODE
-        VideoCapture inputVideo(1);
-    #else
-        int iCount = 10;
-    #endif
-
+    inputVideo >> im;
     while (1)
     {
-        #ifdef VIDEO_MODE
+        // Read image from file
         inputVideo >> im;
-        #else
-        iCount++;
-        ostringstream strPath;
-        strPath << "/home/dm/CodeBase/SLAM_DATA/img/img" << iCount << ".jpg";
-        cout << strPath.str() << endl;
-        im = cv::imread(strPath.str());
-        #endif
 
         double tframe = GetCurrentTime();
 
@@ -103,11 +89,6 @@ int main(int argc, char **argv)
             cout << "Z " << Twc.at<float>(2, 0) * 100 << endl;
             cout << "------------------" << endl;
         }
-
-        // usleep(300 * 1000);
-        #ifndef VIDEO_MODE
-        usleep(10 * 1000);
-        #endif
     }
 
     // Stop all threads
