@@ -21,16 +21,14 @@
 #ifndef FRAME_H
 #define FRAME_H
 
-#include<vector>
-
-#include "MapPoint.h"
-#include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
-#include "ORBVocabulary.h"
-#include "KeyFrame.h"
-#include "ORBextractor.h"
-
+#include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include <opencv2/opencv.hpp>
+#include "ORBVocabulary.h"
+#include "ORBextractor.h"
+#include "MapPoint.h"
+#include "KeyFrame.h"
+#include <vector>
 
 namespace ORB_SLAM2
 {
@@ -49,13 +47,13 @@ public:
     Frame(const Frame &frame);
 
     // Constructor for stereo cameras.
-    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft, ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Constructor for RGB-D cameras.
-    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Constructor for Monocular cameras.
-    Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Extract ORB on the image. 0 for left image and 1 for right image.
     // 提取的关键点存放在mvKeys和mDescriptors中
@@ -75,25 +73,25 @@ public:
 
     // Returns the camera center.
     inline cv::Mat GetCameraCenter()
-	{
+    {
         return mOw.clone();
     }
 
     // Returns inverse of rotation
     inline cv::Mat GetRotationInverse()
-	{
+    {
         return mRwc.clone();
     }
 
     // Check if a MapPoint is in the frustum of the camera
     // and fill variables of the MapPoint to be used by the tracking
     // 判断路标点是否在视野中
-    bool isInFrustum(MapPoint* pMP, float viewingCosLimit);
+    bool isInFrustum(MapPoint *pMP, float viewingCosLimit);
 
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
-    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
+    vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const int minLevel = -1, const int maxLevel = -1) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
     // If there is a match, depth is computed and the right coordinate associated to the left keypoint is stored.
@@ -107,10 +105,10 @@ public:
 
 public:
     // Vocabulary used for relocalization.
-    ORBVocabulary* mpORBvocabulary;
+    ORBVocabulary *mpORBvocabulary;
 
     // Feature extractor. The right is used only in the stereo case.
-    ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
+    ORBextractor *mpORBextractorLeft, *mpORBextractorRight;
 
     // Frame timestamp.
     double mTimeStamp;
@@ -165,7 +163,7 @@ public:
 
     // MapPoints associated to keypoints, NULL pointer if no association.
     // 每个特征点对应的MapPoint
-    std::vector<MapPoint*> mvpMapPoints;
+    std::vector<MapPoint *> mvpMapPoints;
 
     // Flag to identify outlier associations.
     // 观测不到Map中的3D点
@@ -185,15 +183,15 @@ public:
 
     // Current and Next Frame id.
     static long unsigned int nNextId; ///< Next Frame id.
-    long unsigned int mnId; ///< Current Frame id.
+    long unsigned int mnId;           ///< Current Frame id.
 
     // Reference Keyframe.
-    KeyFrame* mpReferenceKF;//指针，指向参考关键帧
+    KeyFrame *mpReferenceKF; //指针，指向参考关键帧
 
     // Scale pyramid info.
-    int mnScaleLevels;//图像提金字塔的层数
-    float mfScaleFactor;//图像提金字塔的尺度因子
-    float mfLogScaleFactor;//
+    int mnScaleLevels;      //图像提金字塔的层数
+    float mfScaleFactor;    //图像提金字塔的尺度因子
+    float mfLogScaleFactor; //
     vector<float> mvScaleFactors;
     vector<float> mvInvScaleFactors;
     vector<float> mvLevelSigma2;
@@ -208,9 +206,7 @@ public:
 
     static bool mbInitialComputations;
 
-
 private:
-
     // Undistort keypoints given OpenCV distortion parameters.
     // Only for the RGB-D case. Stereo must be already rectified!
     // (called in the constructor).
@@ -229,6 +225,6 @@ private:
     cv::Mat mOw;  ///< mtwc,Translation from camera to world
 };
 
-}// namespace ORB_SLAM
+} // namespace ORB_SLAM2
 
 #endif // FRAME_H

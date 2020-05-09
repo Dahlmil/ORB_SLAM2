@@ -50,6 +50,8 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "algorithm": "cpp",
-        "memory": "cpp"
-    }
+        "memory": "cpp",
+        "*.txx": "cpp"
+    },
+    "cmake.configureOnOpen": false
 }

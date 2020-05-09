@@ -38,8 +38,13 @@ include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/../../../
 ${PROJECT_SOURCE_DIR}/../../../include
+${PROJECT_SOURCE_DIR}/../../../incc
 ${Pangolin_INCLUDE_DIRS}
+${PROJECT_SOURCE_DIR}/incc
 )
+
+# 添加DM_TOOL到库文件
+add_library(DM_TOOL SHARED ${PROJECT_SOURCE_DIR}/srcc/Path2RVIZ.cpp)
 
 set(LIBS 
 ${OpenCV_LIBS} 
@@ -48,41 +53,42 @@ ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/../../../Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/../../../Thirdparty/g2o/lib/libg2o.so
 ${PROJECT_SOURCE_DIR}/../../../lib/libORB_SLAM2.so
+${PROJECT_SOURCE_DIR}/lib/libDM_TOOL.so
 -lboost_system
 )
 
-# Node for monocular camera
-rosbuild_add_executable(Mono
-src/ros_mono.cc
-)
+# # Node for monocular camera
+# rosbuild_add_executable(Mono
+# src/ros_mono.cc
+# )
 
-target_link_libraries(Mono
-${LIBS}
-)
+# target_link_libraries(Mono
+# ${LIBS}
+# )
 
-# Node for stereo camera
-rosbuild_add_executable(Stereo
-src/ros_stereo.cc
-)
+# # Node for stereo camera
+# rosbuild_add_executable(Stereo
+# src/ros_stereo.cc
+# )
 
-target_link_libraries(Stereo
-${LIBS}
-)
+# target_link_libraries(Stereo
+# ${LIBS}
+# )
 
-# Node for RGB-D camera
-rosbuild_add_executable(RGBD
-src/ros_rgbd.cc
-)
+# # Node for RGB-D camera
+# rosbuild_add_executable(RGBD
+# src/ros_rgbd.cc
+# )
 
-target_link_libraries(RGBD
-${LIBS}
-)
+# target_link_libraries(RGBD
+# ${LIBS}
+# )
 
 # Node for monocular test
-rosbuild_add_executable(TestMono
+rosbuild_add_executable(test_mono
 src/ros_test_mono.cc
 )
 
-target_link_libraries(TestMono
+target_link_libraries(test_mono
 ${LIBS}
 )
